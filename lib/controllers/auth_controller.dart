@@ -1,70 +1,66 @@
 import 'package:flutter/material.dart';
 
 import '../models/user.dart';
-import '../services/http_service.dart';
+import '../repositories/user_repository.dart';
 import '../services/local_storage_service.dart';
 
 class AuthController extends ChangeNotifier {
+  final LocalStorageService localStorage;
+  final UserRepository repository;
+
   User? _user;
-  bool _isLoggedIn = false;
   bool _isLoading = false;
 
-  final LocalStorageService _localStorageService = LocalStorageService();
+  AuthController({required this.localStorage, required this.repository});
 
   User? get user => _user;
-  bool get isLoggedIn => _isLoggedIn;
+  bool get isLoggedIn => _user != null && _user!.email?.isNotEmpty == true && _user!.token?.isNotEmpty == true;
   bool get isLoading => _isLoading;
 
   Future<void> login(String email, String password) async {
-    try {
-      HttpService httpService = HttpService();
-      final data = await httpService.login(email, password);
-      _user = User.fromMap(data);
-      _isLoggedIn = true;
+    _isLoading = true;
+    notifyListeners();
 
-      await _localStorageService.saveToken(_user!.token!);
-      notifyListeners();
-    } catch (error) {
-      _isLoggedIn = false;
-      notifyListeners();
-      rethrow;
+    final data = await repository.login(email, password);
+    if (data.isNotEmpty) {
+      _user = User.fromMap(data);
+      await localStorage.saveToken(_user!.token!);
+    } else {
+      _user = null;
     }
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> register() async {
     _isLoading = true;
     notifyListeners();
 
-    try {
-      HttpService httpService = HttpService();
-      final data = await httpService.register(user!);
+    final data = await repository.register(user!);
+    if (data.isNotEmpty) {
       _user = User.fromMap(data);
-      _isLoggedIn = true;
-
-      await _localStorageService.saveToken(_user!.token!);
-      _isLoading = false;
-      notifyListeners();
-    } catch (error) {
-      _isLoading = false;
-      notifyListeners();
-      throw Exception('Erro ao registrar usuário');
+    } else {
+      _user = null;
     }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> logout() async {
-    await _localStorageService.clearAll();
-    _isLoggedIn = false;
+    await localStorage.clearAll();
+    _user = null;
     notifyListeners();
   }
 
   Future<void> checkLoginStatus() async {
-    String? token = await _localStorageService.getToken();
+    String? token = await localStorage.getToken();
 
-    if (token != null && token.isNotEmpty) {
-      _isLoggedIn = true;
+    if (token != null) {
+      //buscar e atualizar o usuário;
       notifyListeners();
     } else {
-      _isLoggedIn = false;
+      _user = null;
       notifyListeners();
     }
   }

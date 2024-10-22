@@ -1,45 +1,51 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-import '../models/user.dart';
+import '../config/app_urls.dart';
 
 class HttpService {
-  final String baseUrl = 'http://127.0.0.1:8000/api';
+  final String baseUrl = AppUrls.base;
 
-  Future<Map<String, dynamic>> login(String email, String password) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/login'),
-      body: {
-        'email': email,
-        'password': password,
-      },
-    );
-    print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-    print(response.statusCode);
-    print(response.body);
+  Future<http.Response> get(String endpoint, {Map<String, String>? headers}) async {
+    final defaultHeaders = headers?.cast<String, String>() ?? {}
+      ..addAll({
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      });
 
-    if (response.statusCode == 200) {
-      final result = jsonDecode(response.body);
-      return result["data"];
-    } else {
-      throw Exception('Erro ao fazer login');
+    final url = Uri.parse('$baseUrl$endpoint');
+    try {
+      final response = await http.get(url, headers: defaultHeaders);
+      _handleResponse(response);
+      return response;
+    } catch (e) {
+      throw Exception('Erro ao realizar GET: $e');
     }
   }
 
-  Future<Map<String, dynamic>> register(User user) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/register'),
-      body: {
-        'name': user.name,
-        'email': user.email,
-        'password': user.password,
-      },
-    );
+  Future<http.Response> post(String endpoint, {Object? body, Map<String, String>? headers}) async {
+    final defaultHeaders = headers?.cast<String, String>() ?? {}
+      ..addAll({
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      });
 
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Erro ao fazer registro');
+    final url = Uri.parse('$baseUrl$endpoint');
+    try {
+      final response = await http.post(url, headers: defaultHeaders, body: jsonEncode(body));
+      _handleResponse(response);
+      return response;
+    } catch (e) {
+      throw Exception('Erro ao realizar POST: $e');
+    }
+  }
+
+  void _handleResponse(http.Response response) {
+    print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+    print(response.statusCode);
+    print(response.body);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Erro na requisição: ${response.statusCode}, ${response.body}');
     }
   }
 }

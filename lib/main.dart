@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'controllers/auth_controller.dart';
+import 'config/app_colors.dart';
+import 'config/app_dependecy.dart';
 import 'views/splash_page.dart';
 
 void main() {
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthController()),
-      ],
+      providers: AppDependency.getProviders(),
       child: const MyApp(),
     ),
   );
@@ -20,8 +19,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: SplashPage(),
+    return MaterialApp(
+      theme: ThemeData(
+        primaryColor: AppColors.primarySwatchColor,
+        primaryColorLight: AppColors.primary,
+        primaryColorDark: AppColors.primaryDark,
+        focusColor: AppColors.primary,
+        appBarTheme: const AppBarTheme(
+          color: AppColors.primaryDark,
+          iconTheme: IconThemeData(color: Colors.white),
+          elevation: 1,
+          titleTextStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 20),
+        ),
+        scaffoldBackgroundColor: const Color(0xffE5E5E5),
+      ),
+      debugShowCheckedModeBanner: false,
+      home: const SplashPage(),
     );
   }
 }

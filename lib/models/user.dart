@@ -46,6 +46,14 @@ class User {
     };
   }
 
+  Map<String, dynamic> toBody() {
+    return <String, dynamic>{
+      'name': name,
+      'email': email,
+      'password': password,
+    };
+  }
+
   static List<User> fromList(list) {
     return List<User>.from(list.map((x) => User.fromMap(x)));
   }
